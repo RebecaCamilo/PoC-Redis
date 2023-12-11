@@ -2,6 +2,7 @@ package com.example.pocredis.controller;
 
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.service.AnyObjectService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(value = "/any-objects", produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+@Tag(name = "Any Object", description = "Management of Any Objects")
 public class AnyObjectController {
 	
 	private final AnyObjectService service;
