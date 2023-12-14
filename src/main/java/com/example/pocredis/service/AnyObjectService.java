@@ -4,6 +4,7 @@ import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.repository.AnyObjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +29,7 @@ public class AnyObjectService {
 		return repository.save(new AnyObject(description));
 	}
 
-	@CacheEvict(value = "anyObjects", key = "#id")
+	@CachePut(value = "anyObjects", key = "#id")
 	public AnyObject update(Long id, String description) {
 		findById(id);
 		return repository.save(new AnyObject(id, description));
