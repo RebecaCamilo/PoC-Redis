@@ -36,6 +36,11 @@ public class AnyObjectController {
 	public ResponseEntity<AnyObject> getById(@PathVariable Long id) {
 		return ResponseEntity.ok(service.findById(id));
 	}
+
+	@GetMapping(value = "/restrict/{id}", produces="application/json")
+	public ResponseEntity<AnyObject> getByIdRestrict(@PathVariable Long id) {
+		return ResponseEntity.ok(service.findByIdRestrict(id));
+	}
 	
 	@PostMapping(value = "/{id}", produces="application/json")
 	public ResponseEntity<AnyObject> create(String description) {
