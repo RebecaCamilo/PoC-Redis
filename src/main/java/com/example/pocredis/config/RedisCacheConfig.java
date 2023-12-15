@@ -21,4 +21,9 @@ public class RedisCacheConfig {
                 .cacheDefaults(cacheConfiguration)
                 .build();
     }
+
+    @Bean
+    public HashKey hashKey() {
+        return new HashKey();
+    }
 }
