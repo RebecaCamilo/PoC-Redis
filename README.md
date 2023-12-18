@@ -32,3 +32,6 @@ mvn spring-boot:run
 ```
 Now, the Swagger of application will be available for access at http://localhost:8080/swagger-ui/index.html. You can start experimenting and exploring the use of Redis as a caching system in the application.
 To access the Redis web interface, you can visit http://localhost:8001/.
+
+https://github.com/RebecaCamilo/PoC-Redis/assets/71824475/ed603aad-a8c3-4ec0-8895-db366c3cb4fd
+
