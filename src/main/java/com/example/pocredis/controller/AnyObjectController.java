@@ -1,8 +1,10 @@
 package com.example.pocredis.controller;
 
+import com.example.pocredis.controller.request.AnyObjectRequest;
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.service.AnyObjectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -44,8 +46,8 @@ public class AnyObjectController {
 	}
 	
 	@PostMapping(value = PATH_ID, produces="application/json")
-	public ResponseEntity<AnyObject> create(String description) {
-		AnyObject obj = service.create(description);
+	public ResponseEntity<AnyObject> create(@Valid AnyObjectRequest objRequest) {
+		AnyObject obj = service.create(objRequest.getDescription());
 		return ResponseEntity.created(
 				                     ServletUriComponentsBuilder.fromCurrentRequest()
 				                                                .path("/{id}").buildAndExpand(obj).toUri())
@@ -53,8 +55,8 @@ public class AnyObjectController {
 	}
 	
 	@PutMapping(value = PATH_ID, produces="application/json")
-	public ResponseEntity<AnyObject> update(@PathVariable Long id, String descriptionAtt) {
-		return ResponseEntity.ok(service.update(id, descriptionAtt));
+	public ResponseEntity<AnyObject> update(@PathVariable Long id, @Valid AnyObjectRequest objRequest) {
+		return ResponseEntity.ok(service.update(id, objRequest.getDescription()));
 	}
 	
 	@DeleteMapping(value = PATH_ID)
