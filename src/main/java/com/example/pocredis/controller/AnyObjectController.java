@@ -16,33 +16,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import static com.example.pocredis.Path.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController
-@RequestMapping(value = "/any-objects", produces = APPLICATION_JSON_VALUE)
+@RequestMapping(value = PATH_ANY_OBJECT, produces = APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
 @Tag(name = "Any Object", description = "Management of Any Objects")
 public class AnyObjectController {
 	
 	private final AnyObjectService service;
 	
-	@GetMapping(value = "/", produces="application/json")
+	@GetMapping(produces="application/json")
 	public ResponseEntity<Page<AnyObject>> getAll(Pageable pageableRequest) {
 		final Page anyObjectPage = service.findAll(pageableRequest);
 		return ResponseEntity.ok(anyObjectPage);
 	}
 	
-	@GetMapping(value = "/{id}", produces="application/json")
+	@GetMapping(value = PATH_ID, produces="application/json")
 	public ResponseEntity<AnyObject> getById(@PathVariable Long id) {
 		return ResponseEntity.ok(service.findById(id));
 	}
 
-	@GetMapping(value = "/restrict/{id}", produces="application/json")
+	@GetMapping(value = PATH_RESTRICT + PATH_ID, produces="application/json")
 	public ResponseEntity<AnyObject> getByIdRestrict(@PathVariable Long id) {
 		return ResponseEntity.ok(service.findByIdRestrict(id));
 	}
 	
-	@PostMapping(value = "/{id}", produces="application/json")
+	@PostMapping(value = PATH_ID, produces="application/json")
 	public ResponseEntity<AnyObject> create(String description) {
 		AnyObject obj = service.create(description);
 		return ResponseEntity.created(
@@ -51,12 +52,12 @@ public class AnyObjectController {
 		                     .build();
 	}
 	
-	@PutMapping(value = "/{id}", produces="application/json")
+	@PutMapping(value = PATH_ID, produces="application/json")
 	public ResponseEntity<AnyObject> update(@PathVariable Long id, String descriptionAtt) {
 		return ResponseEntity.ok(service.update(id, descriptionAtt));
 	}
 	
-	@DeleteMapping(value = "/{id}")
+	@DeleteMapping(value = PATH_ID)
 	public ResponseEntity<?> delete(@PathVariable Long id) {
 		service.delete(id);
 		return ResponseEntity.ok("Excluído com sucesso");
