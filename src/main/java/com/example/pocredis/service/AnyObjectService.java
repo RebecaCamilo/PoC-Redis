@@ -1,9 +1,10 @@
 package com.example.pocredis.service;
 
-import com.example.pocredis.config.HashKey;
+import com.example.pocredis.exception.AnyObjectNotFoundException;
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.repository.AnyObjectRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.ObjectNotFoundException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -23,12 +24,12 @@ public class AnyObjectService {
 
 	@Cacheable(value = "anyObjects", key = "#id")
 	public AnyObject findById(Long id) {
-		return repository.findById(id).orElseThrow();
+		return repository.findById(id).orElseThrow(() -> new AnyObjectNotFoundException(id));
 	}
 
 	@Cacheable(value = "anyObjects", keyGenerator = "hashKey")
 	public AnyObject findByIdRestrict(Long id) {
-		return repository.findById(id).orElseThrow();
+		return repository.findById(id).orElseThrow(() -> new AnyObjectNotFoundException(id));
 	}
 	
 	public AnyObject create(final String description) {
