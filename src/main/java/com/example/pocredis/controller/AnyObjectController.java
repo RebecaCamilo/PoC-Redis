@@ -9,13 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import static com.example.pocredis.Path.*;
@@ -46,8 +40,8 @@ public class AnyObjectController {
 	}
 	
 	@PostMapping(value = PATH_ID, produces="application/json")
-	public ResponseEntity<AnyObject> create(@Valid AnyObjectRequest objRequest) {
-		AnyObject obj = service.create(objRequest.getDescription());
+	public ResponseEntity<AnyObject> create(@Valid @RequestBody AnyObjectRequest objRequest) {
+		AnyObject obj = service.create(objRequest.getDescription(), objRequest.getQuantity());
 		return ResponseEntity.created(
 				                     ServletUriComponentsBuilder.fromCurrentRequest()
 				                                                .path("/{id}").buildAndExpand(obj).toUri())
@@ -55,8 +49,8 @@ public class AnyObjectController {
 	}
 	
 	@PutMapping(value = PATH_ID, produces="application/json")
-	public ResponseEntity<AnyObject> update(@PathVariable Long id, @Valid AnyObjectRequest objRequest) {
-		return ResponseEntity.ok(service.update(id, objRequest.getDescription()));
+	public ResponseEntity<AnyObject> update(@PathVariable Long id, @Valid @RequestBody AnyObjectRequest objRequest) {
+		return ResponseEntity.ok(service.update(id, objRequest.getDescription(), objRequest.getQuantity()));
 	}
 	
 	@DeleteMapping(value = PATH_ID)

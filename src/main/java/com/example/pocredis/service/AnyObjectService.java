@@ -32,14 +32,14 @@ public class AnyObjectService {
 		return repository.findById(id).orElseThrow(() -> new AnyObjectNotFoundException(id));
 	}
 	
-	public AnyObject create(final String description) {
-		return repository.save(new AnyObject(description));
+	public AnyObject create(final String description, final int quantity) {
+		return repository.save(new AnyObject(description, quantity));
 	}
 
 	@CachePut(value = "anyObjects", key = "#id")
-	public AnyObject update(Long id, String description) {
+	public AnyObject update(Long id, String description, int quantity) {
 		findById(id);
-		return repository.save(new AnyObject(id, description));
+		return repository.save(new AnyObject(id, description, quantity));
 	}
 
 	@CacheEvict(value = "anyObjects", key = "#id")

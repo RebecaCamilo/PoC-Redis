@@ -17,11 +17,16 @@ public class AnyObject implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+
 	@Column(length = 150)
 	private String description;
+
+	@Column
+	private int quantity;
 	
-	public AnyObject(final String description) {
+	public AnyObject(final String description, final int quantity) {
 		this.description = description;
+		this.quantity = quantity;
 	}
 
 }
