@@ -1,10 +1,10 @@
 package com.example.pocredis.service;
 
+import com.example.pocredis.exception.AnyObjectAlreadyExistsException;
 import com.example.pocredis.exception.AnyObjectNotFoundException;
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.repository.AnyObjectRepository;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.ObjectNotFoundException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -32,20 +32,34 @@ public class AnyObjectService {
 		return repository.findById(id).orElseThrow(() -> new AnyObjectNotFoundException(id));
 	}
 	
-	public AnyObject create(final String description, final int quantity) {
-		return repository.save(new AnyObject(description, quantity));
+	public AnyObject create(AnyObject obj) {
+		checkIdDescriptionAlreadyExists(obj.getDescription());
+		return repository.save(new AnyObject(obj.getDescription(), obj.getQuantity()));
 	}
 
 	@CachePut(value = "anyObjects", key = "#id")
-	public AnyObject update(Long id, String description, int quantity) {
-		findById(id);
-		return repository.save(new AnyObject(id, description, quantity));
+	public AnyObject update(AnyObject obj) {
+		findById(obj.getId());
+		checkIfObjectAlreadyExists(obj.getId(), obj.getDescription());
+		return repository.save(new AnyObject(obj.getId(), obj.getDescription(), obj.getQuantity()));
 	}
 
 	@CacheEvict(value = "anyObjects", key = "#id")
 	public void delete(Long id) {
 		findById(id);
 		repository.deleteById(id);
+	}
+
+	private void checkIdDescriptionAlreadyExists(String description) {
+		if (repository.existsByDescription(description)) {
+			throw new AnyObjectAlreadyExistsException(description);
+		}
+	}
+
+	private void checkIfObjectAlreadyExists(Long id, String description) {
+		if (repository.existsByDescriptionNotId(description, id)) {
+			throw new AnyObjectAlreadyExistsException(description);
+		}
 	}
 	
 }
