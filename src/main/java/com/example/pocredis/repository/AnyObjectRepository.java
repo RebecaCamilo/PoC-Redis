@@ -7,4 +7,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AnyObjectRepository extends JpaRepository<AnyObject, Long> {
 
+    boolean existsByDescription(String description);
+
+    boolean existsByDescriptionNotId(String description, Long id);
 }
