@@ -14,7 +14,7 @@ import lombok.Setter;
 public class AnyObjectRequest {
 
     @NotBlank(message = "Description is mandatory.")
-    @Size(max = 5, message = "Max number of characters is 5")
+    @Size(max = 50, message = "Maximum number of characters must be 50")
     String description;
 
     int quantity;
