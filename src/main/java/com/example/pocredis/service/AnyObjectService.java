@@ -33,15 +33,15 @@ public class AnyObjectService {
 	}
 	
 	public AnyObject create(AnyObject obj) {
-		checkIdDescriptionAlreadyExists(obj.getDescription());
+		checkIfDescriptionAlreadyExists(obj.getDescription());
 		return repository.save(new AnyObject(obj.getDescription(), obj.getQuantity()));
 	}
 
 	@CachePut(value = "anyObjects", key = "#id")
-	public AnyObject update(AnyObject obj) {
-		findById(obj.getId());
-		checkIfObjectAlreadyExists(obj.getId(), obj.getDescription());
-		return repository.save(new AnyObject(obj.getId(), obj.getDescription(), obj.getQuantity()));
+	public AnyObject update(Long id, AnyObject obj) {
+		findById(id);
+		checkIfObjectAlreadyExists(id, obj.getDescription());
+		return repository.save(new AnyObject(id, obj.getDescription(), obj.getQuantity()));
 	}
 
 	@CacheEvict(value = "anyObjects", key = "#id")
@@ -50,7 +50,7 @@ public class AnyObjectService {
 		repository.deleteById(id);
 	}
 
-	private void checkIdDescriptionAlreadyExists(String description) {
+	private void checkIfDescriptionAlreadyExists(String description) {
 		if (repository.existsByDescription(description)) {
 			throw new AnyObjectAlreadyExistsException(description);
 		}

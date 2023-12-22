@@ -51,8 +51,8 @@ public class AnyObjectController {
 
     @PutMapping(value = PATH_ID, produces = "application/json")
     public ResponseEntity<AnyObject> update(@PathVariable Long id, @Valid @RequestBody AnyObjectRequest objRequest) {
-        return ResponseEntity.ok(service.update(new AnyObject(id, objRequest.getDescription(),
-                                                              objRequest.getQuantity())));
+        return ResponseEntity.ok(service.update(id,
+                                                new AnyObject(objRequest.getDescription(), objRequest.getQuantity())));
     }
 
     @DeleteMapping(value = PATH_ID)
