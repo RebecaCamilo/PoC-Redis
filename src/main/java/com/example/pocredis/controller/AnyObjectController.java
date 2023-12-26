@@ -11,9 +11,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
 
 import static com.example.pocredis.Path.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.springframework.web.servlet.support.ServletUriComponentsBuilder.fromCurrentRequest;
 
 @RestController
 @RequestMapping(value = PATH_ANY_OBJECT, produces = APPLICATION_JSON_VALUE)
@@ -39,14 +43,17 @@ public class AnyObjectController {
         return ResponseEntity.ok(service.findByIdRestrict(id));
     }
 
-    @PostMapping(value = PATH_ID, produces = "application/json")
+    @PostMapping(produces = "application/json")
     public ResponseEntity<AnyObject> create(@Valid @RequestBody AnyObjectRequest objRequest) {
 
         AnyObject obj = service.create(new AnyObject(objRequest.getDescription(), objRequest.getQuantity()));
-        return ResponseEntity.created(
-                        ServletUriComponentsBuilder.fromCurrentRequest()
-                                .path("/{id}").buildAndExpand(obj).toUri())
-                .build();
+
+        final URI location = fromCurrentRequest()
+                                                .path("/{id}")
+                                                .buildAndExpand(obj.getId())
+                                                .toUri();
+
+        return ResponseEntity.created(location).body(obj);
     }
 
     @PutMapping(value = PATH_ID, produces = "application/json")
