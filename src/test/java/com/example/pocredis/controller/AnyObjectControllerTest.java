@@ -1,5 +1,6 @@
 package com.example.pocredis.controller;
 
+import com.example.pocredis.exception.AnyObjectNotFoundException;
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.service.AnyObjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,8 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import static com.example.pocredis.Path.PATH_ANY_OBJECT;
-import static com.example.pocredis.Path.PATH_ID;
+import static com.example.pocredis.Path.*;
 import static com.example.pocredis.model.AnyObjectFactoryTest.createValidAnyObject;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -87,9 +87,50 @@ class AnyObjectControllerTest {
                 .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isNotFound())
                 .andExpect(content().string(org.hamcrest.Matchers
-                        .containsString("AnyObject#" + obj.getId().toString())));
+                        .containsString("Object with id " + obj.getId().toString() + " not found.")));
 
         verify(this.service, times(1)).findById(obj.getId());
+    }
+
+    @Test
+    @DisplayName("Should return 200 when getById Restrict is Success")
+    void shouldReturn200whenGetByIdRestrictIsSuccess() throws Exception {
+        // Given
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        when(service.findByIdRestrict(obj.getId())).thenReturn(obj);
+
+        // Then
+        this.mockMvc.perform(get(PATH_ANY_OBJECT + PATH_RESTRICT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").value(obj.getId()))
+                .andExpect(jsonPath("$.description").value(obj.getDescription()));
+
+        verify(this.service, times(1)).findByIdRestrict(obj.getId());
+    }
+
+    @Test
+    @DisplayName("Should return 404 when getById Restrict is Not Found")
+    void shouldReturn404whenGetByIdRestrictIsNotFound() throws Exception {
+        // Given
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        when(service.findByIdRestrict(obj.getId())).thenThrow(createObjectNotFoundException(obj.getId()));
+
+        // Then
+        this.mockMvc.perform(get(PATH_ANY_OBJECT + PATH_RESTRICT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Object with id " + obj.getId().toString() + " not found.")));
+
+        verify(this.service, times(1)).findByIdRestrict(obj.getId());
     }
 
     @Test
@@ -113,8 +154,29 @@ class AnyObjectControllerTest {
         verify(this.service, times(1)).findById(obj.getId());
     }
 
-    private static ObjectNotFoundException createObjectNotFoundException(Long id) {
-        return new ObjectNotFoundException("AnyObject", id);
+    @Test
+    @DisplayName("Should return 300X when create is Success")
+    void shouldReturn300XwhenCreateIsSuccess() throws Exception {
+        // Given
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        when(service.findById(obj.getId())).thenReturn(obj);
+
+        // Then
+        this.mockMvc.perform(get(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").value(obj.getId()))
+                .andExpect(jsonPath("$.description").value(obj.getDescription()));
+
+        verify(this.service, times(1)).findById(obj.getId());
+    }
+
+    private static AnyObjectNotFoundException createObjectNotFoundException(Long id) {
+        return new AnyObjectNotFoundException(id);
     }
 
 
