@@ -1,10 +1,11 @@
 package com.example.pocredis.controller;
 
+import com.example.pocredis.controller.request.AnyObjectRequest;
+import com.example.pocredis.exception.AnyObjectAlreadyExistsException;
 import com.example.pocredis.exception.AnyObjectNotFoundException;
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.service.AnyObjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hibernate.ObjectNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import static com.example.pocredis.Path.*;
 import static com.example.pocredis.model.AnyObjectFactoryTest.createValidAnyObject;
+import static com.example.pocredis.model.AnyObjectRequestFactoryTest.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,7 +42,7 @@ class AnyObjectControllerTest {
 
     @Test
     @DisplayName("Should return 200 when getAll is Success")
-    void shouldReturn200whenGetAllIsSuccess() throws Exception {
+    void shouldReturn200WhenGetAllIsSuccess() throws Exception {
         // When
         when(service.findAll(any(Pageable.class))).thenReturn(any(Page.class));
 
@@ -53,7 +56,7 @@ class AnyObjectControllerTest {
 
     @Test
     @DisplayName("Should return 200 when getById is Success")
-    void shouldReturn200whenGetByIdIsSuccess() throws Exception {
+    void shouldReturn200WhenGetByIdIsSuccess() throws Exception {
         // Given
         AnyObject obj = createValidAnyObject();
 
@@ -74,7 +77,7 @@ class AnyObjectControllerTest {
 
     @Test
     @DisplayName("Should return 404 when getById is Not Found")
-    void shouldReturn404whenGetByIdIsNotFound() throws Exception {
+    void shouldReturn404WhenGetByIdIsNotFound() throws Exception {
         // Given
         AnyObject obj = createValidAnyObject();
 
@@ -94,7 +97,7 @@ class AnyObjectControllerTest {
 
     @Test
     @DisplayName("Should return 200 when getById Restrict is Success")
-    void shouldReturn200whenGetByIdRestrictIsSuccess() throws Exception {
+    void shouldReturn200WhenGetByIdRestrictIsSuccess() throws Exception {
         // Given
         AnyObject obj = createValidAnyObject();
 
@@ -115,7 +118,7 @@ class AnyObjectControllerTest {
 
     @Test
     @DisplayName("Should return 404 when getById Restrict is Not Found")
-    void shouldReturn404whenGetByIdRestrictIsNotFound() throws Exception {
+    void shouldReturn404WhenGetByIdRestrictIsNotFound() throws Exception {
         // Given
         AnyObject obj = createValidAnyObject();
 
@@ -135,50 +138,93 @@ class AnyObjectControllerTest {
 
     @Test
     @DisplayName("Should return 201 when create is Success")
-    void shouldReturn201whenCreateIsSuccess() throws Exception {
+    void shouldReturn201WhenCreateIsSuccess() throws Exception {
         // Given
+        AnyObjectRequest objReq = createValidAnyObjectRequest();
         AnyObject obj = createValidAnyObject();
 
         // When
-        when(service.findById(obj.getId())).thenReturn(obj);
+        when(service.create(any(AnyObject.class))).thenReturn(obj);
+        final var expectedBodyJson = this.objectMapper.writeValueAsString(obj);
 
         // Then
-        this.mockMvc.perform(get(PATH_ANY_OBJECT + PATH_ID, obj.getId())
-                        .contentType(APPLICATION_JSON))
+        this.mockMvc.perform(post(PATH_ANY_OBJECT)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
+                .andExpect(redirectedUrlPattern("**/" + PATH_ANY_OBJECT + "/" + obj.getId()))
+                .andExpect(content().json(expectedBodyJson))
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.id").value(obj.getId()))
-                .andExpect(jsonPath("$.description").value(obj.getDescription()));
+                .andExpect(jsonPath("$.description").value(obj.getDescription()))
+                .andExpect(jsonPath("$.quantity").value(obj.getQuantity()))
+                .andReturn();
 
-        verify(this.service, times(1)).findById(obj.getId());
+        verify(this.service, times(1)).create(any(AnyObject.class));
     }
 
     @Test
-    @DisplayName("Should return 300X when create is Success")
-    void shouldReturn300XwhenCreateIsSuccess() throws Exception {
+    @DisplayName("Should return 400 when create is BadRequest NullDescription")
+    void shouldReturn400WhenCreateIsBadRequestNullDescription() throws Exception {
         // Given
+        AnyObjectRequest objReq = createInvalidAnyObjectNullDescription();
+
+        // Then
+        this.mockMvc.perform(post(PATH_ANY_OBJECT)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Description is mandatory.")));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when create is BadRequest Max Characters Exceeded")
+    void shouldReturn400WhenCreateIsBadRequestMaxCharactersExceeded() throws Exception {
+        // Given
+        AnyObjectRequest objReq = createInvalidAnyObjectMaxCharacters();
+
+        // Then
+        this.mockMvc.perform(post(PATH_ANY_OBJECT)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Maximum number of characters must be 50")));
+    }
+
+    @Test
+    @DisplayName("Should return 409 when create is Conflict")
+    void shouldReturn409WhenCreateIsConflict() throws Exception {
+        // Given
+        AnyObjectRequest objReq = createValidAnyObjectRequest();
         AnyObject obj = createValidAnyObject();
 
         // When
-        when(service.findById(obj.getId())).thenReturn(obj);
+        when(service.create(any(AnyObject.class)))
+                .thenThrow(createAnyObjectAlreadyExistsException(obj.getDescription()));
 
         // Then
-        this.mockMvc.perform(get(PATH_ANY_OBJECT + PATH_ID, obj.getId())
-                        .contentType(APPLICATION_JSON))
+        this.mockMvc.perform(post(PATH_ANY_OBJECT)
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
                 .andDo(MockMvcResultHandlers.print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.id").value(obj.getId()))
-                .andExpect(jsonPath("$.description").value(obj.getDescription()));
+                .andExpect(status().isConflict())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Object with description " + obj.getDescription() + " already exists.")));
 
-        verify(this.service, times(1)).findById(obj.getId());
+        verify(this.service, times(1)).create(any(AnyObject.class));
     }
 
     private static AnyObjectNotFoundException createObjectNotFoundException(Long id) {
         return new AnyObjectNotFoundException(id);
     }
 
-
+    private static AnyObjectAlreadyExistsException createAnyObjectAlreadyExistsException(String description) {
+        return new AnyObjectAlreadyExistsException(description);
+    }
 
 }
