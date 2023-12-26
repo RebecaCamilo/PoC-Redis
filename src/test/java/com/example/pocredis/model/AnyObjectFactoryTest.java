@@ -6,6 +6,8 @@ public class AnyObjectFactoryTest {
         return AnyObject.builder()
                 .id(1L)
                 .description("mesa")
+                .quantity(1)
                 .build();
     }
+
 }
