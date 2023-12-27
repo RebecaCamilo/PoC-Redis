@@ -24,6 +24,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -38,7 +40,6 @@ class AnyObjectControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
 
     @Test
     @DisplayName("Should return 200 when getAll is Success")
@@ -70,7 +71,8 @@ class AnyObjectControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.id").value(obj.getId()))
-                .andExpect(jsonPath("$.description").value(obj.getDescription()));
+                .andExpect(jsonPath("$.description").value(obj.getDescription()))
+                .andExpect(jsonPath("$.quantity").value(obj.getQuantity()));
 
         verify(this.service, times(1)).findById(obj.getId());
     }
@@ -111,7 +113,8 @@ class AnyObjectControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.id").value(obj.getId()))
-                .andExpect(jsonPath("$.description").value(obj.getDescription()));
+                .andExpect(jsonPath("$.description").value(obj.getDescription()))
+                .andExpect(jsonPath("$.quantity").value(obj.getQuantity()));
 
         verify(this.service, times(1)).findByIdRestrict(obj.getId());
     }
@@ -158,8 +161,7 @@ class AnyObjectControllerTest {
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.id").value(obj.getId()))
                 .andExpect(jsonPath("$.description").value(obj.getDescription()))
-                .andExpect(jsonPath("$.quantity").value(obj.getQuantity()))
-                .andReturn();
+                .andExpect(jsonPath("$.quantity").value(obj.getQuantity()));
 
         verify(this.service, times(1)).create(any(AnyObject.class));
     }
@@ -217,6 +219,127 @@ class AnyObjectControllerTest {
                         .containsString("Object with description " + obj.getDescription() + " already exists.")));
 
         verify(this.service, times(1)).create(any(AnyObject.class));
+    }
+
+    @Test
+    @DisplayName("Should return 201 when update is Success")
+    void shouldReturn201WhenUpdateIsSuccess() throws Exception {
+        // Given
+        AnyObjectRequest objReq = createValidAnyObjectRequest();
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        when(service.update(any(Long.class), any(AnyObject.class))).thenReturn(obj);
+
+        // Then
+        this.mockMvc.perform(put(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").value(obj.getId()))
+                .andExpect(jsonPath("$.description").value(obj.getDescription()))
+                .andExpect(jsonPath("$.quantity").value(obj.getQuantity()));
+
+        verify(this.service, times(1)).update(any(Long.class), any(AnyObject.class));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when update is BadRequest NullDescription")
+    void shouldReturn400WhenUpdateIsBadRequestNullDescription() throws Exception {
+        // Given
+        AnyObjectRequest objReq = createInvalidAnyObjectNullDescription();
+        AnyObject obj = createValidAnyObject();
+
+        // Then
+        this.mockMvc.perform(put(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Description is mandatory.")));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when update is BadRequest Max Characters Exceeded")
+    void shouldReturn400WhenUpdateIsBadRequestMaxCharactersExceeded() throws Exception {
+        // Given
+        AnyObjectRequest objReq = createInvalidAnyObjectMaxCharacters();
+        AnyObject obj = createValidAnyObject();
+
+        // Then
+        this.mockMvc.perform(put(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Maximum number of characters must be 50")));
+    }
+
+    @Test
+    @DisplayName("Should return 409 when update is Conflict")
+    void shouldReturn409WhenUpdateIsConflict() throws Exception {
+        // Given
+        AnyObjectRequest objReq = createValidAnyObjectRequest();
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        when(service.update(any(Long.class), any(AnyObject.class)))
+                .thenThrow(createAnyObjectAlreadyExistsException(obj.getDescription()));
+
+        // Then
+        this.mockMvc.perform(put(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(objReq)))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isConflict())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Object with description " + obj.getDescription() + " already exists.")));
+
+        verify(this.service, times(1)).update(any(Long.class), any(AnyObject.class));
+    }
+
+    @Test
+    @DisplayName("Should return 200 when delete is Success")
+    void shouldReturn200WhenDeleteIsSuccess() throws Exception {
+        // Given
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        doNothing().when(service).delete(obj.getId());
+
+        // Then
+        this.mockMvc.perform(delete(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Successfully deleted.")));
+
+        verify(this.service, times(1)).delete(obj.getId());
+    }
+
+    @Test
+    @DisplayName("Should return 404 when delete is Not Found")
+    void shouldReturn404WhenDeleteIsNotFound() throws Exception {
+        // Given
+        AnyObject obj = createValidAnyObject();
+
+        // When
+        doThrow(createObjectNotFoundException(obj.getId())).when(service).delete(obj.getId());
+
+        // Then
+        this.mockMvc.perform(delete(PATH_ANY_OBJECT + PATH_ID, obj.getId())
+                        .contentType(APPLICATION_JSON))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(org.hamcrest.Matchers
+                        .containsString("Object with id " + obj.getId().toString() + " not found.")));
+
+        verify(this.service, times(1)).delete(obj.getId());
     }
 
     private static AnyObjectNotFoundException createObjectNotFoundException(Long id) {

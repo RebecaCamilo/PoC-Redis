@@ -65,7 +65,7 @@ public class AnyObjectController {
     @DeleteMapping(value = PATH_ID)
     public ResponseEntity<?> delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.ok("Successfully deleted");
+        return ResponseEntity.ok("Successfully deleted.");
     }
 
 }
