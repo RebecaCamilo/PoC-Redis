@@ -1,5 +1,6 @@
 package com.example.pocredis.service;
 
+import com.example.pocredis.exception.AnyObjectAlreadyExistsException;
 import com.example.pocredis.exception.AnyObjectNotFoundException;
 import com.example.pocredis.model.AnyObject;
 import com.example.pocredis.repository.AnyObjectRepository;
@@ -9,12 +10,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 import static com.example.pocredis.model.AnyObjectFactoryTest.createValidAnyObject;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -75,8 +78,11 @@ class AnyObjectServiceTest {
     @Test
     @DisplayName("Verify findById interaction with repository")
     void verify_findById_interaction_with_repository() {
+        // Given
+        var obj = createValidAnyObject();
+
         // When
-        when(repository.findById(ID)).thenReturn(any(Optional.class));
+        when(repository.findById(ID)).thenReturn(Optional.of(obj));
         this.service.findById(ID);
 
         // Then
@@ -112,8 +118,11 @@ class AnyObjectServiceTest {
     @Test
     @DisplayName("Verify findByIdRestrict interaction with repository")
     void verify_findByIdRestrict_interaction_with_repository() {
+        // Given
+        var obj = createValidAnyObject();
+
         // When
-        when(repository.findById(ID)).thenReturn(Optional.of(any(AnyObject.class)));
+        when(repository.findById(ID)).thenReturn(Optional.of(obj));
         this.service.findByIdRestrict(ID);
 
         // Then
@@ -146,7 +155,52 @@ class AnyObjectServiceTest {
                 .isExactlyInstanceOf(AnyObjectNotFoundException.class);
     }
 
+    @Test
+    @DisplayName("Verify create interaction with repository")
+    void verify_create_interaction_with_repository() {
+        // Given
+        var obj = createValidAnyObject();
 
+        // When
+        when(repository.save(any(AnyObject.class))).thenReturn(obj);
+        this.service.create(obj);
 
+        // Then
+        verify(repository, times(1)).save(any(AnyObject.class));
+    }
+
+    @Test
+    @DisplayName("Should create return same object inside repositorys optinal")
+    void should_create_return_same_object_inside_repositorys_optinal() {
+        // Given
+        var obj = createValidAnyObject();
+        var id = obj.getId();
+
+        // When
+        when(repository.save(any(AnyObject.class))).thenReturn(obj);
+        final var result = this.service.create(obj);
+
+        // Then
+        assertThat(result).isEqualTo(Optional.of(obj).get());
+    }
+
+    @Test
+    @DisplayName("Should create throw exception when AnyObject NotFound")
+    void should_create_throw_exception_when_AnyObject_NotFound() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.existsByDescriptionNotId(obj.getDescription(), obj.getId())).thenReturn(true);
+
+        // Then
+        try {
+            service.create(obj);
+        } catch (AnyObjectAlreadyExistsException e) {
+            assertThat(e).isExactlyInstanceOf(AnyObjectAlreadyExistsException.class);
+            assertThat(e.getMessage())
+                    .isEqualTo("Object with description %s already exists.", obj.getDescription());
+        }
+    }
 
 }
