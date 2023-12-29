@@ -172,11 +172,10 @@ class AnyObjectServiceTest {
     }
 
     @Test
-    @DisplayName("Should create return same object inside repositorys optinal")
-    void should_create_return_same_object_inside_repositorys_optinal() {
+    @DisplayName("Should create return same object as repository")
+    void should_create_return_same_object_as_repository() {
         // Given
         var obj = createValidAnyObject();
-        var id = obj.getId();
 
         // When
         when(repository.existsByDescription(obj.getDescription())).thenReturn(false);
@@ -188,8 +187,8 @@ class AnyObjectServiceTest {
     }
 
     @Test
-    @DisplayName("Should create throw exception when AnyObject NotFound")
-    void should_create_throw_exception_when_AnyObject_NotFound() {
+    @DisplayName("Should create throw exception when AnyObject already exists")
+    void should_create_throw_exception_when_AnyObject_already_exists() {
         // Given
         var obj = createValidAnyObject();
 
@@ -199,6 +198,74 @@ class AnyObjectServiceTest {
         // Then
         try {
             service.create(obj);
+        } catch (AnyObjectAlreadyExistsException e) {
+            assertThat(e).isExactlyInstanceOf(AnyObjectAlreadyExistsException.class);
+            assertThat(e.getMessage())
+                    .isEqualTo("Object with description %s already exists.", obj.getDescription());
+        }
+    }
+
+    @Test
+    @DisplayName("Verify update interaction with repository")
+    void verify_update_interaction_with_repository() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.findById(obj.getId())).thenReturn(Optional.of(obj));
+        when(repository.existsByDescriptionNotId(obj.getDescription(), obj.getId())).thenReturn(false);
+        when(repository.save(any(AnyObject.class))).thenReturn(obj);
+        this.service.update(ID, obj);
+
+        // Then
+        verify(repository, times(1)).findById(obj.getId());
+        verify(repository, times(1)).existsByDescriptionNotId(obj.getDescription(), obj.getId());
+        verify(repository, times(1)).save(any(AnyObject.class));
+    }
+
+    @Test
+    @DisplayName("Should update return same object as repository")
+    void should_update_return_same_object_as_repository() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.findById(obj.getId())).thenReturn(Optional.of(obj));
+        when(repository.existsByDescriptionNotId(obj.getDescription(), obj.getId())).thenReturn(false);
+        when(repository.save(any(AnyObject.class))).thenReturn(obj);
+        final var result = this.service.update(ID, obj);
+
+        // Then
+        assertThat(result).isEqualTo(Optional.of(obj).get());
+    }
+
+    @Test
+    @DisplayName("Should update throw exception when AnyObject not exists by id")
+    void should_update_throw_exception_when_AnyObject_not_exists_by_id() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.findById(ID)).thenReturn(Optional.empty());
+
+        // Then
+        assertThatThrownBy(() -> service.update(ID, obj))
+                .isExactlyInstanceOf(AnyObjectNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Should update throw exception when AnyObject already exists")
+    void should_update_throw_exception_when_AnyObject_already_exists() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.findById(obj.getId())).thenReturn(Optional.of(obj));
+        when(repository.existsByDescriptionNotId(obj.getDescription(), obj.getId())).thenReturn(true);
+
+        // Then
+        try {
+            service.update(ID, obj);
         } catch (AnyObjectAlreadyExistsException e) {
             assertThat(e).isExactlyInstanceOf(AnyObjectAlreadyExistsException.class);
             assertThat(e.getMessage())
