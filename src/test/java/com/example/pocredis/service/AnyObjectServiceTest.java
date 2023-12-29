@@ -162,10 +162,12 @@ class AnyObjectServiceTest {
         var obj = createValidAnyObject();
 
         // When
+        when(repository.existsByDescription(obj.getDescription())).thenReturn(false);
         when(repository.save(any(AnyObject.class))).thenReturn(obj);
         this.service.create(obj);
 
         // Then
+        verify(repository, times(1)).existsByDescription(obj.getDescription());
         verify(repository, times(1)).save(any(AnyObject.class));
     }
 
@@ -177,6 +179,7 @@ class AnyObjectServiceTest {
         var id = obj.getId();
 
         // When
+        when(repository.existsByDescription(obj.getDescription())).thenReturn(false);
         when(repository.save(any(AnyObject.class))).thenReturn(obj);
         final var result = this.service.create(obj);
 
