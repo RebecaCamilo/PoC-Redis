@@ -273,4 +273,34 @@ class AnyObjectServiceTest {
         }
     }
 
+    @Test
+    @DisplayName("Verify delete interaction with repository")
+    void verify_delete_interaction_with_repository() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.findById(obj.getId())).thenReturn(Optional.of(obj));
+        doNothing().when(repository).deleteById(obj.getId());
+        this.service.delete(obj.getId());
+
+        // Then
+        verify(repository, times(1)).findById(obj.getId());
+        verify(repository, times(1)).deleteById(obj.getId());
+    }
+
+    @Test
+    @DisplayName("Should delete throw exception when AnyObject not exists by id")
+    void should_delete_throw_exception_when_AnyObject_not_exists_by_id() {
+        // Given
+        var obj = createValidAnyObject();
+
+        // When
+        when(repository.findById(ID)).thenReturn(Optional.empty());
+
+        // Then
+        assertThatThrownBy(() -> service.delete(obj.getId()))
+                .isExactlyInstanceOf(AnyObjectNotFoundException.class);
+    }
+
 }
