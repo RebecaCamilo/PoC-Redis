@@ -20,12 +20,25 @@ import static org.mockito.Mockito.*;
 
 class AnyObjectServiceTest {
 
+    private final Long ID = 1L;
+
     private final AnyObjectService service;
     private final AnyObjectRepository repository;
 
     AnyObjectServiceTest() {
         this.repository = mock(AnyObjectRepository.class);
         this.service = new AnyObjectService(this.repository);
+    }
+
+    @Test
+    @DisplayName("Verify findAll interaction with repository")
+    void verify_findAll_interaction_with_repository() {
+        // When
+        when(repository.findAll(any(Pageable.class))).thenReturn(any(Page.class));
+        this.service.findAll(Pageable.unpaged());
+
+        // Then
+        verify(repository, times(1)).findAll(Pageable.unpaged());
     }
 
     @Test
@@ -60,14 +73,14 @@ class AnyObjectServiceTest {
     }
 
     @Test
-    @DisplayName("Verify interaction with repository")
-    void verify_interaction_with_repository() {
+    @DisplayName("Verify findById interaction with repository")
+    void verify_findById_interaction_with_repository() {
         // When
-        when(repository.findAll(any(Pageable.class))).thenReturn(any(Page.class));
-        final var result = this.service.findAll(Pageable.unpaged());
+        when(repository.findById(ID)).thenReturn(any(Optional.class));
+        this.service.findById(ID);
 
         // Then
-        verify(repository, times(1)).findAll(Pageable.unpaged());
+        verify(repository, times(1)).findById(ID);
     }
 
     @Test
@@ -88,15 +101,23 @@ class AnyObjectServiceTest {
     @Test
     @DisplayName("Should throw exception when AnyObject NotFound")
     void should_findById_throw_exception_when_AnyObject_NotFound() {
-        // Given
-        var id = 1L;
-
         // When
-        when(repository.findById(id)).thenReturn(Optional.empty());
+        when(repository.findById(ID)).thenReturn(Optional.empty());
 
         // Then
-        assertThatThrownBy(() -> service.findById(id))
+        assertThatThrownBy(() -> service.findById(ID))
                 .isExactlyInstanceOf(AnyObjectNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("Verify findByIdRestrict interaction with repository")
+    void verify_findByIdRestrict_interaction_with_repository() {
+        // When
+        when(repository.findById(ID)).thenReturn(Optional.of(any(AnyObject.class)));
+        this.service.findByIdRestrict(ID);
+
+        // Then
+        verify(repository, times(1)).findById(ID);
     }
 
     @Test
@@ -117,16 +138,15 @@ class AnyObjectServiceTest {
     @Test
     @DisplayName("Should findByIdRestrict throw exception when AnyObject NotFound")
     void should_findByIdRestrict_throw_exception_when_AnyObject_NotFound() {
-        // Given
-        var id = 1L;
-
         // When
-        when(repository.findById(id)).thenReturn(Optional.empty());
+        when(repository.findById(ID)).thenReturn(Optional.empty());
 
         // Then
-        assertThatThrownBy(() -> service.findByIdRestrict(id))
+        assertThatThrownBy(() -> service.findByIdRestrict(ID))
                 .isExactlyInstanceOf(AnyObjectNotFoundException.class);
     }
+
+
 
 
 }
