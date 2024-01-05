@@ -41,7 +41,7 @@ public class AnyObjectCachingIntegrationTest {
 
 
     @Test
-    void verify_findById_cache_interaction_with_repository() {
+    void verify_when_findById_save_AnyObject_in_cache() {
         AnyObject obj = createValidAnyObject();
 
         when(repository.findById(obj.getId())).thenReturn(Optional.of(obj));
@@ -51,6 +51,5 @@ public class AnyObjectCachingIntegrationTest {
 
         verify(repository, times(1)).findById(obj.getId());
     }
-
 
 }
